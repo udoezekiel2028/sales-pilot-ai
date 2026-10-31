@@ -12,11 +12,14 @@ import {
   Check,
   Database,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  BrainCircuit,
+  Sparkles
 } from "lucide-react";
 
 export default function SettingsPage() {
   const [calendarUrl, setCalendarUrl] = useState("https://cal.com/outreach-team/15min");
+  const [manusApiKey, setManusApiKey] = useState("sk-iOLUnPjZq6VRXEuVVrL1iWbiOLdy-mCKC7CGFPzB7IqaRK85d-dwZdCHyXtDED5501dApRkzR0I6bdCMJhWYf9fdgRDh");
   const [apolloApiKey, setApolloApiKey] = useState("");
   const [apiKey] = useState("exp_live_9a8f27b4e1c50d8823");
   const [copied, setCopied] = useState(false);
@@ -54,6 +57,49 @@ export default function SettingsPage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* Manus AI Integration (Agent 01 Engine) */}
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-emerald-500/30 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-white">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>Manus AI — Agent 01 Web Intelligence & Deep Scraper</span>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span>Connected (Agent 01)</span>
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Powers <strong>AI Agent 01</strong>. When a business URL is entered, it is dispatched to the <strong>Manus AI Autonomous Agent</strong> to deep-scrape the homepage, product pages, pricing models, and case studies to pinpoint the highest-value customer profile.
+          </p>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-slate-300">
+                Manus AI API Key:
+              </label>
+              <a
+                href="https://manus.im"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-emerald-400 hover:underline flex items-center gap-1"
+              >
+                <span>Manus AI Console</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <input
+              type="password"
+              value={manusApiKey}
+              onChange={(e) => setManusApiKey(e.target.value)}
+              placeholder="Paste your Manus AI API key"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400 font-mono"
+            />
+            <span className="text-[10px] text-slate-500 mt-1 block">
+              Active Key: <code className="text-emerald-400">sk-iOLUnPjZ...9fdgRDh</code> (Configured as primary research agent).
+            </span>
+          </div>
+        </div>
+
         {/* Apollo.io Integration */}
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
           <div className="flex items-center justify-between">

@@ -75,6 +75,14 @@ export interface BusinessProfileOutput {
   // Deep-Scraped Surface Audits & Highest-Value Customer Synthesis
   scrapedPagesAudit: ScrapedPageAudit[];
   valueExtractionInsight: ValueExtractionInsight;
+  // Manus AI Agent Execution Metadata
+  manusTaskResult?: {
+    task_id: string;
+    task_url: string;
+    status: string;
+    agentProvider: string;
+    created_at: string;
+  };
 }
 
 // ----------------------------------------------------------------------------

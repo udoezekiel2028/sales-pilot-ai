@@ -8,16 +8,17 @@ import {
   ScrapedPageAudit,
   ValueExtractionInsight
 } from "./types";
+import { dispatchManusResearchMission } from "../integrations/manusClient";
 
 /**
- * AI AGENT 01: Business Analyst (Business Intelligence Agent)
+ * AI AGENT 01: Manus AI Business Intelligence & Web Research Agent
  * 
- * Primary Task:
+ * Powered by Manus AI Autonomous Agent API:
  * When a business URL is entered:
- * 1. Deeply analyze the website to understand exactly what the business does,
- *    its core products/services, value proposition, and business model.
- * 2. Generate a bespoke, actionable Ideal Customer Profile (ICP) defining
- *    who buys from them, target personas, company sizing, and outbound pitch hooks.
+ * 1. Dispatches an autonomous research mission to Manus AI Agent
+ * 2. Deep-scrapes multiple key surfaces (Homepage, /product, /pricing, and /case-studies)
+ * 3. Pinpoints exactly who gets the most value from his/her offer
+ * 4. Synthesizes a tailored Ideal Customer Profile (ICP) for downstream agents.
  */
 export async function runBusinessIntelligenceAgent(
   input: BusinessAnalystInput
@@ -31,6 +32,12 @@ export async function runBusinessIntelligenceAgent(
   const formattedUrl = rawUrl.startsWith("http") ? rawUrl : `https://${cleanDomain}`;
   const rootName = cleanDomain.split(".")[0];
   const brandName = rootName.charAt(0).toUpperCase() + rootName.slice(1);
+
+  // Dispatch Autonomous Research Mission to Manus AI Agent
+  const manusTaskResult = await dispatchManusResearchMission({
+    websiteUrl: formattedUrl,
+    businessDescription: input.businessDescription
+  });
 
   // 1. Attempt Web Metadata Scraping safely
   let scrapedTitle = "";
@@ -582,7 +589,8 @@ export async function runBusinessIntelligenceAgent(
     confidenceScore: 0.96,
     icpSpecification,
     scrapedPagesAudit,
-    valueExtractionInsight
+    valueExtractionInsight,
+    manusTaskResult
   };
 }
 
