@@ -44,6 +44,22 @@ export interface IcpDetailedSpecification {
   recommendedPitchHook: string;
 }
 
+export interface ScrapedPageAudit {
+  pageType: "HOMEPAGE" | "PRODUCT_FEATURES" | "PRICING" | "CASE_STUDIES";
+  url: string;
+  status: "SCRAPED_SUCCESS" | "SYNTHESIZED_INSIGHT";
+  keySignalsExtracted: string[];
+  snippet: string;
+}
+
+export interface ValueExtractionInsight {
+  highestValueProfile: string;
+  whyTheyGetTheMostValue: string;
+  quantifiableRoiMetrics: string[];
+  pricingTierFit: string;
+  provenCaseStudyProof: string[];
+}
+
 export interface BusinessProfileOutput {
   companyName: string;
   websiteUrl: string;
@@ -56,6 +72,9 @@ export interface BusinessProfileOutput {
   offerAngle: string;
   confidenceScore: number;
   icpSpecification: IcpDetailedSpecification;
+  // Deep-Scraped Surface Audits & Highest-Value Customer Synthesis
+  scrapedPagesAudit: ScrapedPageAudit[];
+  valueExtractionInsight: ValueExtractionInsight;
 }
 
 // ----------------------------------------------------------------------------

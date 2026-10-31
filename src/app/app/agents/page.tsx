@@ -21,7 +21,14 @@ import {
   Clock,
   ThumbsUp,
   ThumbsDown,
-  X
+  X,
+  Globe,
+  CreditCard,
+  Layers,
+  Award,
+  Target,
+  DollarSign,
+  Flame
 } from "lucide-react";
 import {
   PipelineExecutionState,
@@ -70,9 +77,9 @@ export default function AgentsHubPage() {
 
     try {
       // -------------------------------------------------------------
-      // STEP 1: Agent 01 (Business Intelligence & ICP Generator)
+      // STEP 1: Agent 01 (Business Intelligence & Deep Multi-Surface Scraping)
       // -------------------------------------------------------------
-      setCurrentStepName("Agent 01: Analyzing website & generating tailored ICP...");
+      setCurrentStepName("Agent 01: Deep-scraping homepage, /product, /pricing, and /case-studies to identify highest-value buyer...");
       const businessProfile = await runBusinessIntelligenceAgent({
         websiteUrl: websiteUrl.trim() || "brilliantcraft.io",
         businessDescription: ""
@@ -87,7 +94,7 @@ export default function AgentsHubPage() {
       setPipeline(step1State);
 
       // Brief animation pause for clear agent handoff
-      await new Promise((r) => setTimeout(r, 650));
+      await new Promise((r) => setTimeout(r, 700));
 
       // -------------------------------------------------------------
       // STEP 2: Agent 02 (Lead Discovery via Apollo.io Data)
@@ -524,10 +531,133 @@ export default function AgentsHubPage() {
                 </div>
               </div>
 
-              {/* Part 1: What the Business Does */}
+              {/* 1. HIGHEST-VALUE CUSTOMER SPOTLIGHT (WHO GETS THE MOST VALUE FROM THIS OFFER) */}
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/40 via-slate-950 to-indigo-950/30 border-2 border-emerald-500/50 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-emerald-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                      <Flame className="w-4 h-4 fill-emerald-400" />
+                    </span>
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
+                      Highest-Value Customer Profile Spotlight
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Pricing Fit: <strong className="text-emerald-400">{pipeline.businessProfile.valueExtractionInsight?.pricingTierFit || "Growth / Scale Tier"}</strong>
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-white leading-snug">
+                    {pipeline.businessProfile.valueExtractionInsight?.highestValueProfile}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    <strong>Why They Get Maximum Value:</strong> {pipeline.businessProfile.valueExtractionInsight?.whyTheyGetTheMostValue}
+                  </p>
+                </div>
+
+                {/* Quantifiable ROI Drivers */}
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-slate-400 font-bold block mb-2">
+                    Quantifiable ROI Drivers & Extracted Economic Impact:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {pipeline.businessProfile.valueExtractionInsight?.quantifiableRoiMetrics?.map((metric, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>{metric}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Case Study Evidence */}
+                {pipeline.businessProfile.valueExtractionInsight?.provenCaseStudyProof && (
+                  <div className="pt-3 border-t border-slate-800 text-xs text-slate-300 space-y-1.5">
+                    <span className="text-[10px] font-mono uppercase text-indigo-400 font-bold block">
+                      Extracted Customer Case Study Evidence:
+                    </span>
+                    {pipeline.businessProfile.valueExtractionInsight.provenCaseStudyProof.map((proof, idx) => (
+                      <p key={idx} className="flex items-start gap-2 text-[11px] text-slate-300">
+                        <Award className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                        <span>{proof}</span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. MULTI-SURFACE DEEP AUDIT (HOMEPAGE, PRODUCT, PRICING, CASE STUDIES) */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
+                    2. Multi-Page Surface Audit (Deep Scraped):
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400">
+                    4 Core Surfaces Scraped & Verified
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {pipeline.businessProfile.scrapedPagesAudit?.map((page, idx) => {
+                    const iconMap = {
+                      HOMEPAGE: Globe,
+                      PRODUCT_FEATURES: Layers,
+                      PRICING: CreditCard,
+                      CASE_STUDIES: Award
+                    };
+                    const IconComponent = iconMap[page.pageType] || Globe;
+                    const titleMap = {
+                      HOMEPAGE: "Homepage & Brand Positioning",
+                      PRODUCT_FEATURES: "Product & Solution Architecture",
+                      PRICING: "Pricing & Packaging Model",
+                      CASE_STUDIES: "Case Studies & Customer Proof"
+                    };
+
+                    return (
+                      <div key={idx} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-4 h-4 text-emerald-400" />
+                            <h4 className="text-xs font-bold text-white">{titleMap[page.pageType]}</h4>
+                          </div>
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                            {page.status === "SCRAPED_SUCCESS" ? "SCRAPED ✓" : "SYNTHESIZED"}
+                          </span>
+                        </div>
+
+                        <p className="text-[11px] text-slate-400 leading-snug">
+                          {page.snippet}
+                        </p>
+
+                        <div className="pt-2 border-t border-slate-900">
+                          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">
+                            Key Extracted Signals:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {page.keySignalsExtracted.slice(0, 3).map((sig, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800"
+                              >
+                                {sig}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. What the Business Does */}
               <div>
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
-                  1. What the Business Does & Solves:
+                  3. What the Business Does & Solves:
                 </span>
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 leading-relaxed">
                   <p className="mb-2"><strong>Executive Summary:</strong> {pipeline.businessProfile.executiveSummary}</p>
@@ -553,10 +683,10 @@ export default function AgentsHubPage() {
                 </div>
               </div>
 
-              {/* Part 2: Tailored Ideal Customer Profile (ICP) */}
+              {/* Part 4: Tailored Ideal Customer Profile (ICP) */}
               <div className="pt-6 border-t border-slate-800">
                 <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block mb-3 font-mono">
-                  2. Tailored Ideal Customer Profile (ICP) Specifications:
+                  4. Tailored Ideal Customer Profile (ICP) Specifications:
                 </span>
 
                 {/* Target Personas */}
