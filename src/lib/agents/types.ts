@@ -193,7 +193,7 @@ export interface SalesConversationInput {
     receivedAt: string;
   };
   conversationHistory?: { role: "agent" | "prospect"; text: string }[];
-  calendarBookingUrl: string;
+  calendarBookingUrl?: string;
 }
 
 export type DetectedReplyIntent =

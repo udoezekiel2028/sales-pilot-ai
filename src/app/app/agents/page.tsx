@@ -29,10 +29,17 @@ import {
   SalesConversationOutput,
   CampaignIntelligenceOutput
 } from "@/lib/agents/types";
+import { runBusinessIntelligenceAgent } from "@/lib/agents/agent01-business-intelligence";
+import { runLeadDiscoveryAgent } from "@/lib/agents/agent02-lead-discovery";
+import { runLeadResearchAgent } from "@/lib/agents/agent03-lead-research";
+import { runOutreachCopywritingAgent } from "@/lib/agents/agent04-outreach-copywriting";
+import { runSalesConversationAgent } from "@/lib/agents/agent05-sales-conversation";
+import { runCampaignIntelligenceAgent } from "@/lib/agents/agent06-campaign-intelligence";
 
 export default function AgentsHubPage() {
   const [websiteUrl, setWebsiteUrl] = useState("brilliantcraft.io");
   const [isRunning, setIsRunning] = useState(false);
+  const [currentStepName, setCurrentStepName] = useState("");
   const [pipeline, setPipeline] = useState<PipelineExecutionState | null>(null);
   const [activeTab, setActiveTab] = useState<"pipeline" | "conversation" | "intelligence">("pipeline");
   const [selectedDraft, setSelectedDraft] = useState<OutreachDraftPackage | null>(null);
@@ -46,95 +53,221 @@ export default function AgentsHubPage() {
   const [intelligenceResult, setIntelligenceResult] = useState<CampaignIntelligenceOutput | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
-  // Trigger Multi-Agent Pipeline
+  // Trigger Multi-Agent Sequential Pipeline Directly in Browser
   const handleRunPipeline = async () => {
     setIsRunning(true);
     setPipeline(null);
 
+    const initialId = `pipe_${Date.now()}`;
+    const initialPipeline: PipelineExecutionState = {
+      id: initialId,
+      stage: "AGENT_01_ANALYZING_BUSINESS",
+      userApprovedCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setPipeline(initialPipeline);
+
     try {
-      const res = await fetch("/api/agents/pipeline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteUrl })
+      // -------------------------------------------------------------
+      // STEP 1: Agent 01 (Business Intelligence & ICP Generator)
+      // -------------------------------------------------------------
+      setCurrentStepName("Agent 01: Analyzing website & generating tailored ICP...");
+      const businessProfile = await runBusinessIntelligenceAgent({
+        websiteUrl: websiteUrl.trim() || "brilliantcraft.io",
+        businessDescription: ""
       });
-      const data = await res.json();
-      if (data.success) {
-        setPipeline(data.pipeline);
-      }
+
+      const step1State: PipelineExecutionState = {
+        ...initialPipeline,
+        stage: "AGENT_02_DISCOVERING_PROSPECTS",
+        businessProfile,
+        updatedAt: new Date().toISOString()
+      };
+      setPipeline(step1State);
+
+      // Brief animation pause for clear agent handoff
+      await new Promise((r) => setTimeout(r, 650));
+
+      // -------------------------------------------------------------
+      // STEP 2: Agent 02 (Lead Discovery via Apollo.io Data)
+      // -------------------------------------------------------------
+      setCurrentStepName("Agent 02: Translating ICP to Apollo.io queries & finding leads...");
+      const targetRoles = businessProfile.icpSpecification?.targetBuyerPersonas.map((p) => p.title) || [
+        "VP of Sales",
+        "CRO",
+        "Head of Growth",
+        "CTO"
+      ];
+      const targetIndustries = businessProfile.suggestedSegments.map((s) => s.segmentName);
+
+      const discoveryResults = await runLeadDiscoveryAgent({
+        icp: {
+          targetIndustries,
+          headcountRanges: businessProfile.icpSpecification?.headcountBrackets || ["25-100", "101-500"],
+          targetLocations: businessProfile.icpSpecification?.geographicFocus || ["United States", "United Kingdom", "Germany"],
+          targetRoles
+        },
+        searchFilters: {
+          techStackKeywords: businessProfile.icpSpecification?.techStackSignals || [],
+          limit: 5
+        }
+      });
+
+      const step2State: PipelineExecutionState = {
+        ...step1State,
+        stage: "AGENT_03_RESEARCHING_LEADS",
+        discoveryResults,
+        updatedAt: new Date().toISOString()
+      };
+      setPipeline(step2State);
+
+      await new Promise((r) => setTimeout(r, 650));
+
+      // -------------------------------------------------------------
+      // STEP 3: Agent 03 (Lead Research & Verifiable Public Signals)
+      // -------------------------------------------------------------
+      setCurrentStepName("Agent 03: Extracting public signals, tech stacks & hiring trends...");
+      const researchResults = await runLeadResearchAgent(
+        discoveryResults.qualifiedCompanies,
+        businessProfile
+      );
+
+      const step3State: PipelineExecutionState = {
+        ...step2State,
+        stage: "AGENT_04_DRAFTING_OUTREACH",
+        researchResults,
+        updatedAt: new Date().toISOString()
+      };
+      setPipeline(step3State);
+
+      await new Promise((r) => setTimeout(r, 650));
+
+      // -------------------------------------------------------------
+      // STEP 4: Agent 04 (Outreach Copywriting with Pitch Hook)
+      // -------------------------------------------------------------
+      setCurrentStepName("Agent 04: Drafting personalized emails with pitch hooks...");
+      const copywritingOutput = await runOutreachCopywritingAgent(
+        discoveryResults.qualifiedCompanies,
+        researchResults.researchedAccounts,
+        businessProfile,
+        "direct"
+      );
+
+      // -------------------------------------------------------------
+      // STEP 5: Mandatory Human-In-The-Loop Approval Gate
+      // -------------------------------------------------------------
+      const finalState: PipelineExecutionState = {
+        ...step3State,
+        stage: "AWAITING_USER_APPROVAL",
+        draftPackages: copywritingOutput.draftPackages,
+        updatedAt: new Date().toISOString()
+      };
+      setPipeline(finalState);
+      setCurrentStepName("Paused at Human Approval Gate: Ready for review");
     } catch (e) {
-      console.error(e);
+      console.error("Agent execution error:", e);
     } finally {
       setIsRunning(false);
     }
   };
 
   // Human-in-the-Loop Approval Action
-  const handleApprovalAction = async (companyId: string, action: "APPROVE" | "REJECT") => {
-    if (!pipeline) return;
+  const handleApprovalAction = (companyId: string, action: "APPROVE" | "REJECT") => {
+    if (!pipeline || !pipeline.draftPackages) return;
 
-    try {
-      const res = await fetch("/api/agents/pipeline", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pipelineId: pipeline.id,
-          companyId,
-          action
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setPipeline(data.pipeline);
-        if (selectedDraft?.companyId === companyId) {
-          const updated = data.pipeline.draftPackages.find((p: any) => p.companyId === companyId);
-          setSelectedDraft(updated || null);
-        }
+    const updatedDrafts = pipeline.draftPackages.map((draft) => {
+      if (draft.companyId === companyId) {
+        return {
+          ...draft,
+          approvalStatus: action === "APPROVE" ? ("APPROVED" as const) : ("REJECTED" as const)
+        };
       }
-    } catch (e) {
-      console.error(e);
+      return draft;
+    });
+
+    const approvedCount = updatedDrafts.filter((d) => d.approvalStatus === "APPROVED").length;
+    const allReviewed = updatedDrafts.every((d) => d.approvalStatus !== "PENDING_USER_REVIEW");
+
+    const updatedPipeline: PipelineExecutionState = {
+      ...pipeline,
+      draftPackages: updatedDrafts,
+      userApprovedCount: approvedCount,
+      stage: allReviewed ? "CAMPAIGN_APPROVED_READY" : "AWAITING_USER_APPROVAL",
+      updatedAt: new Date().toISOString()
+    };
+
+    setPipeline(updatedPipeline);
+
+    if (selectedDraft?.companyId === companyId) {
+      const updated = updatedDrafts.find((p) => p.companyId === companyId);
+      setSelectedDraft(updated || null);
     }
   };
 
-  // Test Agent 5
+  // Test Agent 5 (Sales Conversation Triage)
   const handleTestConversation = async () => {
     setIsClassifying(true);
     try {
-      const res = await fetch("/api/agents/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inboundEmail: {
-            messageId: "msg_test_01",
-            senderEmail: "prospect@targetcorp.com",
-            senderName: "Sarah Jenkins",
-            subject: "Re: Quick question",
-            body: testReplyText,
-            receivedAt: new Date().toISOString()
-          }
-        })
+      const analysis = await runSalesConversationAgent({
+        inboundEmail: {
+          messageId: `msg_${Date.now()}`,
+          senderEmail: "prospect@targetcorp.com",
+          senderName: "Sarah Jenkins",
+          subject: "Re: Quick question",
+          body: testReplyText,
+          receivedAt: new Date().toISOString()
+        },
+        calendarBookingUrl: "https://cal.com/salespilot/demo"
       });
-      const data = await res.json();
-      if (data.success) {
-        setConversationResult(data.analysis);
-      }
+      setConversationResult(analysis);
+    } catch (e) {
+      console.error("Conversation agent error:", e);
     } finally {
       setIsClassifying(false);
     }
   };
 
-  // Test Agent 6
+  // Test Agent 6 (Campaign Intelligence)
   const handleRunIntelligence = async () => {
     setIsOptimizing(true);
     try {
-      const res = await fetch("/api/agents/intelligence", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ campaignId: "camp_01" })
+      const intelligence = await runCampaignIntelligenceAgent({
+        campaignId: "camp_01",
+        campaignName: "Q1 Autonomous Outbound",
+        metrics: {
+          totalSent: 1250,
+          deliveredCount: 1240,
+          openedCount: 775,
+          repliedCount: 112,
+          meetingsBookedCount: 28,
+          bouncedCount: 10,
+          unsubscribedCount: 4
+        },
+        stepBreakdown: [
+          {
+            stepNumber: 1,
+            subjectLine: "Quick question regarding {{companyName}}'s outbound pipeline",
+            sent: 1240,
+            opened: 775,
+            replied: 84
+          },
+          {
+            stepNumber: 2,
+            subjectLine: "Re: Quick question regarding {{companyName}}'s outbound pipeline",
+            sent: 920,
+            opened: 580,
+            replied: 28
+          }
+        ],
+        segmentBreakdown: [
+          { segmentName: "FinTech & Financial Infrastructure", sent: 620, replied: 74, booked: 21 },
+          { segmentName: "General B2B Software Services", sent: 620, replied: 38, booked: 7 }
+        ]
       });
-      const data = await res.json();
-      if (data.success) {
-        setIntelligenceResult(data.intelligence);
-      }
+      setIntelligenceResult(intelligence);
+    } catch (e) {
+      console.error("Intelligence agent error:", e);
     } finally {
       setIsOptimizing(false);
     }
@@ -295,6 +428,27 @@ export default function AgentsHubPage() {
               <span>{isRunning ? "Orchestrating Agents..." : "Run Multi-Agent Pipeline"}</span>
             </button>
           </div>
+
+          {/* Active Pipeline Status Banner */}
+          {(isRunning || currentStepName) && (
+            <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in">
+              <div className="flex items-center gap-3">
+                {isRunning ? (
+                  <RotateCw className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                )}
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Active Agent Status</span>
+                  <p className="text-white font-medium">{currentStepName}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-400 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>Autonomous Execution Live</span>
+              </div>
+            </div>
+          )}
 
           {/* Six Agents Visual Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -30,41 +30,44 @@ export async function runBusinessIntelligenceAgent(
   const rootName = cleanDomain.split(".")[0];
   const brandName = rootName.charAt(0).toUpperCase() + rootName.slice(1);
 
-  // 1. Attempt Real Web Metadata Scraping with a fast timeout
+  // 1. Attempt Web Metadata Scraping safely
   let scrapedTitle = "";
   let scrapedDescription = "";
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+  // Only perform network fetch if in a server environment to avoid browser CORS/User-Agent errors
+  if (typeof window === "undefined") {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3500);
 
-    const res = await fetch(formattedUrl, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "SalesPilot-BusinessAnalystBot/1.0 (+https://salespilot-ai.pages.dev)"
+      const res = await fetch(formattedUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "SalesPilot-BusinessAnalystBot/1.0"
+        }
+      });
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        const html = await res.text();
+
+        // Extract <title>
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          scrapedTitle = titleMatch[1].trim();
+        }
+
+        // Extract meta description or og:description
+        const descMatch =
+          html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+          html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+        if (descMatch && descMatch[1]) {
+          scrapedDescription = descMatch[1].trim();
+        }
       }
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      const html = await res.text();
-
-      // Extract <title>
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if (titleMatch && titleMatch[1]) {
-        scrapedTitle = titleMatch[1].trim();
-      }
-
-      // Extract meta description or og:description
-      const descMatch =
-        html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
-        html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
-      if (descMatch && descMatch[1]) {
-        scrapedDescription = descMatch[1].trim();
-      }
+    } catch (err) {
+      // Graceful fallback to domain intelligence analyzer if remote website blocks bots or times out
     }
-  } catch (err) {
-    // Graceful fallback to domain intelligence analyzer if remote website blocks bots or times out
   }
 
   // 2. Specialized Sector & Domain Intelligence Classification
@@ -83,9 +86,21 @@ export async function runBusinessIntelligenceAgent(
     | "HEALTHCARE"
     | "ECOMMERCE_LOGISTICS"
     | "AI_PLATFORM"
+    | "AGENCY_DESIGN_DEV"
     | "B2B_SAAS_GENERAL" = "B2B_SAAS_GENERAL";
 
   if (
+    analysisContext.includes("craft") ||
+    analysisContext.includes("design") ||
+    analysisContext.includes("studio") ||
+    analysisContext.includes("agency") ||
+    analysisContext.includes("consult") ||
+    analysisContext.includes("ui") ||
+    analysisContext.includes("ux") ||
+    analysisContext.includes("creative")
+  ) {
+    businessCategory = "AGENCY_DESIGN_DEV";
+  } else if (
     analysisContext.includes("pay") ||
     analysisContext.includes("bank") ||
     analysisContext.includes("bill") ||
@@ -400,6 +415,74 @@ export async function runBusinessIntelligenceAgent(
           "Paper-based intake causing data entry errors"
         ],
         recommendedPitchHook: `Noticed your clinic network is expanding in {{city}}—we recently helped a multi-location practice reduce patient no-shows by 45% while saving 20 hours/week in intake.`
+      };
+      break;
+
+    case "AGENCY_DESIGN_DEV":
+      businessModel = "Product Engineering Studio & Digital Product Agency";
+      executiveSummary = scrapedDescription ||
+        `${brandName} is a high-impact digital product and software engineering studio building scalable web platforms, mobile applications, and bespoke digital experiences.`;
+      valueProposition = input.businessDescription && input.businessDescription.length > 20
+        ? input.businessDescription
+        : `Transforming ambitious concepts into market-ready digital products with enterprise-grade engineering, bespoke UI/UX craftsmanship, and rapid sprint execution.`;
+      offerAngle =
+        `We help tech-forward companies and funded startups ship high-velocity web applications and design systems 3x faster without the overhead of full-time engineering hires.`;
+      coreServices = [
+        { name: "Full-Stack Web & Mobile Engineering", category: "Engineering", description: "Modern React/Next.js platforms, resilient APIs, and cloud infrastructure architectures." },
+        { name: "UI/UX Product Design & Design Systems", category: "Design", description: "User research, high-fidelity prototypes, interactive wireframes, and scalable component libraries." },
+        { name: "MVP Build & Rapid Product Sprints", category: "Execution", description: "Accelerating time-to-market from concept to production-ready release in 6-8 weeks." }
+      ];
+      suggestedSegments = [
+        {
+          segmentName: "VC-Funded Startups (Seed to Series B)",
+          priorityScore: 95,
+          rationalization: "Immediate need for rapid product shipping velocity before next funding milestone.",
+          typicalHeadcount: "10-50 employees",
+          keyPainPoint: "Engineering bandwidth bottleneck delaying product roadmap releases."
+        },
+        {
+          segmentName: "Growing Mid-Market Digital Businesses",
+          priorityScore: 91,
+          rationalization: "Modernizing legacy web applications and expanding customer digital touchpoints.",
+          typicalHeadcount: "50-250 employees",
+          keyPainPoint: "In-house team lack capacity for specialized UI/UX design overhaul."
+        }
+      ];
+      icpSpecification = {
+        targetBuyerPersonas: [
+          {
+            title: "Founder / Chief Executive Officer (CEO)",
+            seniority: "C-Level",
+            department: "Executive",
+            corePainPoint: "Need to launch new web product or mobile app fast without recruiting 5 full-time engineers.",
+            buyingTrigger: "Closing a funding round or launching a new product line."
+          },
+          {
+            title: "VP of Product / Head of Product",
+            seniority: "Executive",
+            department: "Product Management",
+            corePainPoint: "Backlog of high-priority feature epics with zero engineering capacity to build them.",
+            buyingTrigger: "Upcoming product deadline or roadmap re-architecture."
+          },
+          {
+            title: "Chief Technology Officer (CTO)",
+            seniority: "C-Level",
+            department: "Engineering",
+            corePainPoint: "Need specialized frontend React/Next.js squad to handle UI redesign while internal team maintains core APIs.",
+            buyingTrigger: "UI revamp or microservice frontend separation."
+          }
+        ],
+        targetCompanyIndustries: ["Technology & Software", "Digital Health", "Fintech", "Consumer Platforms"],
+        headcountBrackets: ["10-50", "51-200"],
+        revenueBrackets: ["$2M - $25M ARR"],
+        geographicFocus: ["United States", "United Kingdom", "Canada", "Germany"],
+        techStackSignals: ["React", "Next.js", "TypeScript", "Node.js", "TailwindCSS"],
+        corePainPointsSolved: [
+          "Months wasted in hiring and onboarding developers",
+          "Subpar user experiences causing high product churn",
+          "Slow sprint release cycles delaying go-to-market"
+        ],
+        recommendedPitchHook: `Noticed {{companyName}}'s rapid momentum—we recently helped a similar high-growth team accelerate their product release roadmap by 3x with dedicated engineering squads.`
       };
       break;
 

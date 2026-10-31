@@ -17,6 +17,7 @@ export async function runSalesConversationAgent(
 ): Promise<SalesConversationOutput> {
   const text = input.inboundEmail.body.toLowerCase();
   const firstName = input.inboundEmail.senderName.split(" ")[0] || "there";
+  const bookingUrl = input.calendarBookingUrl || "https://cal.com/salespilot/demo";
 
   // 1. Unsubscribe Detection
   if (
@@ -55,7 +56,7 @@ export async function runSalesConversationAgent(
       sentiment: "POSITIVE",
       isUnsubscribeRequest: false,
       recommendedAction: "AUTO_REPLY_WITH_CALENDAR",
-      suggestedResponse: `Hi ${firstName},\n\nFantastic, looking forward to speaking! You can select whatever time works best directly on my calendar here:\n\n${input.calendarBookingUrl}\n\nTalk soon!`,
+      suggestedResponse: `Hi ${firstName},\n\nFantastic, looking forward to speaking! You can select whatever time works best directly on my calendar here:\n\n${bookingUrl}\n\nTalk soon!`,
       requiresHumanReview: false
     };
   }
