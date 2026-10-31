@@ -61,8 +61,8 @@ export default function DatabasePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-8 border-b border-slate-800 gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-1.5">
-            <Database className="w-4 h-4" />
-            <span>Global B2B Data Lake (105M+ Companies)</span>
+            <Database className="w-4 h-4 text-indigo-400" />
+            <span>Powered by Apollo.io Lead Intelligence (275M+ Verified Contacts)</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Prospect & Decision-Maker Directory

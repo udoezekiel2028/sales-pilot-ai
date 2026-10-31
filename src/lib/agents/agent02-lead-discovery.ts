@@ -1,28 +1,37 @@
 import { LeadDiscoveryInput, LeadDiscoveryOutput, QualifiedCompanyProspect, DiscoveredContact } from "./types";
-import { MOCK_B2B_COMPANIES } from "@/data/mockDatabase";
+import { queryApolloLeadData } from "../integrations/apolloClient";
 
 /**
  * AI AGENT 02: Lead Discovery Agent (Prospecting)
  * 
- * Specialized Responsibility:
- * Translates the ICP into exact provider search filters, queries the 105M+ database,
- * performs deduplication, flags missing contact info, and returns verified qualified prospect records.
+ * Powered by Apollo.io B2B Intelligence:
+ * Translates the user's ICP into Apollo.io search queries and parameters,
+ * queries Apollo's global repository of 275M+ verified business contacts and companies,
+ * removes duplicate domains/emails, and flags records with missing info.
  */
 export async function runLeadDiscoveryAgent(
   input: LeadDiscoveryInput
 ): Promise<LeadDiscoveryOutput> {
   const providerFilters = {
-    industries: input.icp.targetIndustries,
-    headcount: input.icp.headcountRanges,
-    locations: input.icp.targetLocations,
-    titles: input.icp.targetRoles,
-    techStackKeywords: input.searchFilters?.techStackKeywords || [],
-    emailValidationStatus: "STRICT_MX_VERIFIED",
+    provider: "Apollo.io API",
+    personTitles: input.icp.targetRoles,
+    organizationIndustries: input.icp.targetIndustries,
+    headcountRanges: input.icp.headcountRanges,
+    organizationLocations: input.icp.targetLocations,
+    techKeywords: input.searchFilters?.techStackKeywords || [],
+    emailStatus: "verified_only",
     excludeDomains: input.searchFilters?.excludeDomains || []
   };
 
-  const limit = input.searchFilters?.limit || 10;
-  const rawCompanies = [...MOCK_B2B_COMPANIES];
+  // Query Apollo.io API Client
+  const apolloResponse = await queryApolloLeadData({
+    titles: input.icp.targetRoles,
+    industries: input.icp.targetIndustries,
+    headcountRanges: input.icp.headcountRanges,
+    locations: input.icp.targetLocations,
+    domainKeywords: input.searchFilters?.techStackKeywords,
+    perPage: input.searchFilters?.limit || 10
+  });
 
   // Deduplication tracking
   const seenDomains = new Set<string>();
@@ -32,60 +41,37 @@ export async function runLeadDiscoveryAgent(
 
   const qualified: QualifiedCompanyProspect[] = [];
 
-  for (const raw of rawCompanies) {
-    if (seenDomains.has(raw.domain)) {
+  for (const company of apolloResponse.qualifiedCompanies) {
+    if (seenDomains.has(company.domain)) {
       duplicatesRemoved++;
       continue;
     }
-    seenDomains.add(raw.domain);
+    seenDomains.add(company.domain);
 
     const validContacts: DiscoveredContact[] = [];
 
-    for (const dm of raw.decisionMakers) {
-      if (seenEmails.has(dm.email)) {
+    for (const contact of company.contacts) {
+      if (seenEmails.has(contact.email)) {
         duplicatesRemoved++;
         continue;
       }
-      seenEmails.add(dm.email);
+      seenEmails.add(contact.email);
 
-      const missingFields: string[] = [];
-      if (!dm.email) missingFields.push("email");
-      if (!dm.linkedin) missingFields.push("linkedinUrl");
-      if (!dm.name) missingFields.push("name");
-
-      if (missingFields.length > 0) {
+      if (contact.hasMissingInfo || !contact.email) {
         missingInfoFlagged++;
       }
 
-      validContacts.push({
-        contactId: dm.id,
-        name: dm.name,
-        title: dm.title,
-        email: dm.email,
-        isVerifiedEmail: dm.isVerified,
-        hasMissingInfo: missingFields.length > 0,
-        missingFields,
-        linkedinUrl: dm.linkedin
-      });
+      validContacts.push(contact);
     }
 
     qualified.push({
-      companyId: raw.id,
-      name: raw.name,
-      domain: raw.domain,
-      industry: raw.industry,
-      headcount: raw.headcount,
-      location: `${raw.location.city}, ${raw.location.country}`,
-      techStack: raw.techStack,
-      contacts: validContacts,
-      relevanceScore: Math.floor(Math.random() * 15) + 85 // 85-99%
+      ...company,
+      contacts: validContacts
     });
-
-    if (qualified.length >= limit) break;
   }
 
   return {
-    totalRawFound: rawCompanies.length,
+    totalRawFound: apolloResponse.totalFound,
     duplicatesRemoved,
     missingInfoFlagged,
     qualifiedCompanies: qualified,

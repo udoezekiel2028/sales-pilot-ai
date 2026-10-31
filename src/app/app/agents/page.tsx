@@ -155,10 +155,10 @@ export default function AgentsHubPage() {
       id: "agent_02",
       number: "02",
       name: "Prospecting",
-      title: "Lead Discovery Agent",
+      title: "Lead Discovery Agent (Apollo.io)",
       icon: Search,
       color: "text-indigo-400 border-indigo-500/30 bg-indigo-500/10",
-      description: "Translates ICP into provider search filters, queries 105M+ database, dedupes accounts, and flags missing info.",
+      description: "Powered by Apollo.io API: Translates ICP into provider search queries, fetches verified decision-makers, and deduplicates records.",
       status: pipeline?.discoveryResults ? "COMPLETED" : isRunning && pipeline?.businessProfile ? "RUNNING" : "WAITING"
     },
     {
