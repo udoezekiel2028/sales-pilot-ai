@@ -25,9 +25,29 @@ export interface CustomerSegmentRecommendation {
   keyPainPoint: string;
 }
 
+export interface TargetBuyerPersona {
+  title: string;
+  seniority: string;
+  department: string;
+  corePainPoint: string;
+  buyingTrigger: string;
+}
+
+export interface IcpDetailedSpecification {
+  targetBuyerPersonas: TargetBuyerPersona[];
+  targetCompanyIndustries: string[];
+  headcountBrackets: string[];
+  revenueBrackets: string[];
+  geographicFocus: string[];
+  techStackSignals: string[];
+  corePainPointsSolved: string[];
+  recommendedPitchHook: string;
+}
+
 export interface BusinessProfileOutput {
   companyName: string;
   websiteUrl: string;
+  businessModel: string;
   executiveSummary: string;
   coreServices: ServiceProductItem[];
   valueProposition: string;
@@ -35,6 +55,7 @@ export interface BusinessProfileOutput {
   suggestedSegments: CustomerSegmentRecommendation[];
   offerAngle: string;
   confidenceScore: number;
+  icpSpecification: IcpDetailedSpecification;
 }
 
 // ----------------------------------------------------------------------------

@@ -343,6 +343,146 @@ export default function AgentsHubPage() {
             })}
           </div>
 
+          {/* AGENT 01 DOSSIER: BUSINESS ANALYSIS & ICP SPECIFICATION */}
+          {pipeline?.businessProfile && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-emerald-500/40 shadow-2xl space-y-6 animate-in fade-in">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="w-5 h-5 text-emerald-400" />
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">
+                      Agent 01: Business Intelligence & ICP Dossier
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-white mt-1">
+                    {pipeline.businessProfile.companyName} Analysis & Target ICP
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Website: <a href={pipeline.businessProfile.websiteUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">{pipeline.businessProfile.websiteUrl}</a>
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    Model: {pipeline.businessProfile.businessModel}
+                  </span>
+                </div>
+              </div>
+
+              {/* Part 1: What the Business Does */}
+              <div>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                  1. What the Business Does & Solves:
+                </span>
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  <p className="mb-2"><strong>Executive Summary:</strong> {pipeline.businessProfile.executiveSummary}</p>
+                  <p className="text-emerald-400 font-medium"><strong>Core Value Proposition:</strong> {pipeline.businessProfile.valueProposition}</p>
+                </div>
+              </div>
+
+              {/* Core Services / Products identified */}
+              <div>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                  Identified Products & Core Solutions:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {pipeline.businessProfile.coreServices.map((srv, idx) => (
+                    <div key={idx} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                      <span className="text-[10px] font-mono text-emerald-400 block mb-1 uppercase font-semibold">
+                        {srv.category}
+                      </span>
+                      <h4 className="font-bold text-white text-xs mb-1">{srv.name}</h4>
+                      <p className="text-[11px] text-slate-400 leading-snug">{srv.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Part 2: Tailored Ideal Customer Profile (ICP) */}
+              <div className="pt-6 border-t border-slate-800">
+                <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block mb-3 font-mono">
+                  2. Tailored Ideal Customer Profile (ICP) Specifications:
+                </span>
+
+                {/* Target Personas */}
+                <div className="space-y-3 mb-6">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider text-slate-300">
+                    Target Buyer Personas (Who Buys from Them):
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {pipeline.businessProfile.icpSpecification?.targetBuyerPersonas.map((persona, idx) => (
+                      <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            {persona.seniority}
+                          </span>
+                          <span className="text-[10px] text-slate-500">{persona.department}</span>
+                        </div>
+                        <h5 className="font-bold text-white text-xs">{persona.title}</h5>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                          <strong>Core Pain Point:</strong> {persona.corePainPoint}
+                        </p>
+                        <div className="text-[10px] text-emerald-400 pt-1 border-t border-slate-900">
+                          <strong>Trigger:</strong> {persona.buyingTrigger}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Target Sizing & Industries Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs mb-6">
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block mb-1 uppercase font-semibold">
+                      Target Industries
+                    </span>
+                    <span className="text-slate-200 font-medium block">
+                      {pipeline.businessProfile.icpSpecification?.targetCompanyIndustries.slice(0, 3).join(", ")}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block mb-1 uppercase font-semibold">
+                      Employee Headcount
+                    </span>
+                    <span className="text-emerald-400 font-mono font-bold block">
+                      {pipeline.businessProfile.icpSpecification?.headcountBrackets.join(" or ")} employees
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block mb-1 uppercase font-semibold">
+                      Revenue Bracket
+                    </span>
+                    <span className="text-indigo-400 font-mono font-bold block">
+                      {pipeline.businessProfile.icpSpecification?.revenueBrackets.join(", ")}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block mb-1 uppercase font-semibold">
+                      Geographic Focus
+                    </span>
+                    <span className="text-slate-200 block">
+                      {pipeline.businessProfile.icpSpecification?.geographicFocus.slice(0, 3).join(", ")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Recommended Pitch Hook */}
+                <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-xs">
+                  <span className="text-[10px] font-mono font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                    Synthesized Outbound Value Angle (Passed to Agent 04):
+                  </span>
+                  <p className="text-slate-200 font-medium">
+                    "{pipeline.businessProfile.offerAngle}"
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* HUMAN-IN-THE-LOOP APPROVAL SECTION */}
           {pipeline?.draftPackages && (
             <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border-2 border-pink-500/50 shadow-2xl space-y-6">
